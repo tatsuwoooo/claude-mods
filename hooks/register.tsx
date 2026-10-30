@@ -199,10 +199,14 @@ export const register: Register = on => {
             ? `リモートにできませんでした: ${text}`
             : `リモートコントロール: ${text || 'on'}`,
         )
-      } catch {
+      } catch (mcpError) {
         await $.command
           .run({ command: 'remote-control' })
-          .catch(() => $.ui.toast('リモートにできませんでした'))
+          .catch(commandError =>
+            $.ui.toast(
+              `リモートにできませんでした: ${String(mcpError)} / ${String(commandError)}`,
+            ),
+          )
       }
     }
 

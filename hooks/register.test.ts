@@ -71,13 +71,16 @@ test('the band button shoots the clicked window', async ($, on) => {
     ran.push([...e.argv])
 
     return {
-      exitCode: 0,
-      stdout: 'OK 800x600',
-      stderr: '',
-      isStdoutTruncated: false,
-      isStderrTruncated: false,
+      value: {
+        exitCode: 0,
+        stdout: 'OK 800x600',
+        stderr: '',
+        isStdoutTruncated: false,
+        isStderrTruncated: false,
+      },
     }
   })
+  on('ui.toast', () => ({ value: undefined }))
   for (const surface of ['terminal', 'desktop'] as const) {
     ran.length = 0
     const ui = await $.ui.mount({
@@ -91,6 +94,31 @@ test('the band button shoots the clicked window', async ($, on) => {
     expect(ran[0]!.some(arg => arg.endsWith('scripts/window-shot.ps1'))).toBe(
       true,
     )
+    await ui.unmount()
+  }
+})
+
+test('the remote button says why it failed', async ($, on) => {
+  const toasts: string[] = []
+  on('ui.panes', () => ({ value: [] }))
+  // Nothing answers mcp.call or command.run here, so both reject.
+  on('ui.toast', (_, e) => {
+    toasts.push(e.text)
+
+    return { value: undefined }
+  })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    toasts.length = 0
+    const ui = await $.ui.mount({
+      plugin: 'claude-mods',
+      surface,
+      component: 'AbovePrompt',
+      props: { hasSurvey: false },
+    })
+    await ui.press({ key: 'remote' })
+    expect(toasts.length).toBe(1)
+    expect(toasts[0]).toContain('mcp.call')
+    expect(toasts[0]).toContain('command.run')
     await ui.unmount()
   }
 })
