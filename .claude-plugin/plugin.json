@@ -1,6 +1,6 @@
 {
   "name": "claude-mods",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "トークン使用量ペイン、スクショ、リモートコントロールのボタンをまとめた mod",
   "types": "./types/index.d.ts"
 }

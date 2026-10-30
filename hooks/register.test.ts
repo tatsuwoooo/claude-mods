@@ -98,10 +98,34 @@ test('the band button shoots the clicked window', async ($, on) => {
   }
 })
 
+test('the remote button asks Claude when the direct calls fail', async ($, on) => {
+  const prompts: string[] = []
+  on('ui.panes', () => ({ value: [] }))
+  // Nothing answers mcp.call or command.run here, so both reject.
+  on('prompt.submit', (_, e) => {
+    prompts.push(e.text)
+
+    return { text: e.text }
+  })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    prompts.length = 0
+    const ui = await $.ui.mount({
+      plugin: 'claude-mods',
+      surface,
+      component: 'AbovePrompt',
+      props: { hasSurvey: false },
+    })
+    await ui.press({ key: 'remote' })
+    expect(prompts.length).toBe(1)
+    expect(prompts[0]).toContain('リモートコントロール')
+    await ui.unmount()
+  }
+})
+
 test('the remote button says why it failed', async ($, on) => {
   const toasts: string[] = []
   on('ui.panes', () => ({ value: [] }))
-  // Nothing answers mcp.call or command.run here, so both reject.
+  // Nothing answers mcp.call, command.run or prompt.submit here.
   on('ui.toast', (_, e) => {
     toasts.push(e.text)
 
@@ -118,7 +142,7 @@ test('the remote button says why it failed', async ($, on) => {
     await ui.press({ key: 'remote' })
     expect(toasts.length).toBe(1)
     expect(toasts[0]).toContain('mcp.call')
-    expect(toasts[0]).toContain('command.run')
+    expect(toasts[0]).toContain('prompt.submit')
     await ui.unmount()
   }
 })

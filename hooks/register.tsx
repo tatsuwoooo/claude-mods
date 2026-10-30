@@ -186,7 +186,8 @@ export const register: Register = on => {
       }
     }
     // The desktop app's own switch for this session; elsewhere the slash
-    // command stands in for it.
+    // command stands in for it. Auto mode's classifier refuses a call no model
+    // turn made, so there the button asks Claude to make it.
     const remote = async () => {
       try {
         const result = await $.mcp.call('ccd_session_mgmt', 'set_remote_control', {
@@ -202,9 +203,14 @@ export const register: Register = on => {
       } catch (mcpError) {
         await $.command
           .run({ command: 'remote-control' })
-          .catch(commandError =>
+          .catch(() =>
+            $.prompt.submit({
+              text: 'リモートボタンを押しました。このセッションのリモートコントロールをオンにしてください。',
+            }),
+          )
+          .catch(promptError =>
             $.ui.toast(
-              `リモートにできませんでした: ${String(mcpError)} / ${String(commandError)}`,
+              `リモートにできませんでした: ${String(mcpError)} / ${String(promptError)}`,
             ),
           )
       }
